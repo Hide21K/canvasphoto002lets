@@ -13,7 +13,7 @@
 <button onclick="uploadAndSendToLINE()">Send to LINE</button>
 
 <!-- Netlify Form -->
-<form name="image-upload" id="image-upload" action="https://canvasphoto002.netlify.app" method="POST" enctype="multipart/form-data" data-netlify="true">
+<form name="image-upload" id="image-upload" action="https://canvasphoto002lets.netlify.app" method="POST" enctype="multipart/form-data" data-netlify="true">
     <input type="file" name="image" accept="image/*" id="file-input" />
     <button type="submit">送信する</button>
 </form>
@@ -78,7 +78,7 @@
         formData.append('image', blob, 'image.png');
 
         // Netlify Formに画像をアップロード
-        fetch('https://canvasphoto002.netlify.app', {
+        fetch('https://canvasphoto002lets.netlify.app', {
             method: 'POST',
             body: formData
         })
