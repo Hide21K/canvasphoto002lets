@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas to LINE</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+
+<canvas id="myCanvas" width="300" height="300" style="border:1px solid #000;"></canvas>
+<button onclick="drawImage()">Draw Image</button>
+<button onclick="uploadAndSendToLINE()">Send to LINE</button>
+
+<!-- Netlify Form -->
+<form name="image-upload" id="image-upload" action="https://canvasphoto002.netlify.app" method="POST" enctype="multipart/form-data" hidden>
+    <input type="file" name="image" accept="image/*" id="file-input" />
+</form>
+
+<script>
+    let canvas = document.getElementById('myCanvas');
+    let ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    window.onload = initializeLIFF;
+
+    function initializeLIFF() {
+        liff.init({
+            liffId: '2001316219-ve1XaARd' // あなたのLIFFアプリのIDに置き換えてください
+        })
+        .then(() => {
+            console.log("LIFF initialization successful");
+        })
+        .catch((err) => {
+            console.error("LIFF initialization failed", err);
+        });
+    }
+
+    function drawImage() {
+        // Canvasに線を描画
+        ctx.beginPath();
+        ctx.arc(150, 150, 50, 0, 2 * Math.PI);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+        ctx.stroke();
+        drawing = true;
+    }
+
+    function uploadAndSendToLINE() {
+        // LIFFが初期化されているか確認
+        if (!liff.isInClient()) {
+            alert('This app must be viewed in the LINE app.');
+            return;
+        }
+
+        // Canvasが描画されているか確認
+        if (!drawing) {
+            alert('Please draw an image first.');
+            return;
+        }
+
+        // 画像データを取得
+        var imageDataURL = canvas.toDataURL();
+
+        // Data URIをBlobに変換
+        var byteString = atob(imageDataURL.split(',')[1]);
+        var mimeString = imageDataURL.split(',')[0].split(':')[1].split(';')[0];
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        var blob = new Blob([ab], { type: mimeString });
+
+        // FormDataを作成
+        var formData = new FormData();
+        formData.append('image', blob, 'image.png');
+
+        // Netlify Formに画像をアップロード
+        fetch('https://canvasphoto002.netlify.app', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // アップロード成功時にLINEに送信
+            sendImageMessage(data.url);
+        })
+        .catch(error => {
+            console.error('Error uploading image', error);
+        });
+    }
+
+    function sendImageMessage(imageUrl) {
+        // 画像のURLをLINEに送信
+        liff.sendMessages([
+            {
+                type: 'image',
+                originalContentUrl: imageUrl,
+                previewImageUrl: imageUrl
+            }
+        ])
+        .then(() => {
+            console.log('Image sent successfully');
+        })
+        .catch((err) => {
+            console.error('Error sending image', err);
+        });
+    }
+</script>
+
+</body>
+</html>
